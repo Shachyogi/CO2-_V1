@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CO₂吸収量計算</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    input, button {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    #output {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>CO₂吸収量計算ツール</h1>
+
+  <label for="sunrise">日の出時刻 (HH:MM):</label>
+  <input type="text" id="sunrise" placeholder="例: 04:26" required>
+
+  <label for="sunset">日の入り時刻 (HH:MM):</label>
+  <input type="text" id="sunset" placeholder="例: 19:00" required>
+
+  <label for="latitude">緯度:</label>
+  <input type="number" id="latitude" value="35.0" step="0.1" required>
+
+  <label for="floor_area">床面積 (㎡):</label>
+  <input type="number" id="floor_area" value="10000" required>
+
+  <label for="plant_density">植物密度 (0.0 - 1.0):</label>
+  <input type="number" id="plant_density" value="1" min="0" max="1" step="0.01" required>
+
+  <button id="calculateBtn">CO₂吸収量を計算</button>
+
+  <div id="output"></div>
+
+  <script>
+    document.getElementById("calculateBtn").addEventListener("click", function() {
+      // 入力された値を取得
+      const sunrise = document.getElementById("sunrise").value.split(':').map(Number);
+      const sunset = document.getElementById("sunset").value.split(':').map(Number);
+      const latitude = parseFloat(document.getElementById("latitude").value);
+      const floor_area = parseFloat(document.getElementById("floor_area").value);
+      const plant_density = parseFloat(document.getElementById("plant_density").value);
+
+      // 日の出、日の入り時刻を分単位に変換
+      const sunriseTime = sunrise[0] + sunrise[1] / 60;
+      const sunsetTime = sunset[0] + sunset[1] / 60;
+
+      // フロントエンドで計算を行う場合（バックエンドの利用無し）
+      fetch("/calculate_co2", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sunrise: sunriseTime,
+          sunset: sunsetTime,
+          latitude: latitude,
+          floor_area: floor_area,
+          plant_density: plant_density
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        // 出力表示
+        document.getElementById("output").innerHTML = `
+          1日のCO₂吸収量: ${data.daily_co2_absorption.toFixed(2)} kg<br>
+          1年間のCO₂吸収量: ${data.yearly_co2_absorption.toFixed(2)} kg
+        `;
+      })
+      .catch(error => console.error('Error:', error));
+    });
+  </script>
+</body>
+</html>
